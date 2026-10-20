@@ -62,8 +62,26 @@ function showCounter() {
   $('setup').hidden = true;
   $('counter').hidden = false;
   renderUnit();
+  renderFolds();
   renderExtras();
   renderExpenses();
+}
+
+// Collapsed cards keep only their summary; the choice is remembered per card.
+const FOLD_CARDS = { extras: 'extraCard', expenses: 'expenseCard' };
+
+function renderFolds() {
+  const folded = state.folded || {};
+  Object.entries(FOLD_CARDS).forEach(([key, id]) => {
+    $(id).classList.toggle('folded', Boolean(folded[key]));
+    $(id).querySelector('.fold-btn').setAttribute('aria-expanded', String(!folded[key]));
+  });
+}
+
+function setFolded(key, folded) {
+  state.folded = { ...state.folded, [key]: folded };
+  save(state);
+  renderFolds();
 }
 
 // Extra income (bonus, side jobs) entered during the current cycle. It adds
@@ -96,6 +114,7 @@ function reachTime(target, perMs) {
 function renderExtras() {
   const list = cycleExtras();
   $('extraEmpty').hidden = list.length > 0;
+  $('extraCard').querySelector('.fold-summary').hidden = list.length === 0;
   $('extraList').hidden = list.length === 0;
   $('extraList').replaceChildren(...list.map((x) => {
     const li = el('li');
@@ -161,28 +180,40 @@ function coverText(at, covered, end, shortBy) {
   return `จะครบ ${dateTimeText(at)} (วันที่ ${Math.ceil((at - state.cycleStart) / UNITS.day.ms)} ของรอบ)`;
 }
 
-// Income pays the fixed expenses one after another in list order: each item
-// fills at the income rate once the items above it are covered, and stops when
-// it is full until the next salary reset.
+// Income pays all fixed expenses at once: the rate is split equally among the
+// items that are not full yet, so a smaller item fills first and its share
+// moves to the rest. With amounts sorted ascending, item i is full once total
+// income reaches the sum of min(amount, amount_i) over all items.
+function fillLevel(earned, amounts) {
+  const sorted = [...amounts].sort((a, b) => a - b);
+  let left = earned;
+  for (let k = 0; k < sorted.length; k++) {
+    const share = left / (sorted.length - k);
+    if (sorted[k] > share) return share;
+    left -= sorted[k];
+  }
+  return Infinity;
+}
+
 function renderExpenseProgress(earned, perMs, end) {
   const list = expenses();
   const income = state.salary + extrasUntil(end);
   const total = expenseTotal();
   if (total <= 0) return;
   const rows = $('expenseList').children;
-  let before = 0;
+  const amounts = list.map((e) => e.amount);
+  const level = fillLevel(earned, amounts);
   list.forEach((e, i) => {
     const row = rows[i];
     if (!row) return;
-    const covered = Math.min(Math.max(earned - before, 0), e.amount);
+    const covered = Math.min(e.amount, level);
     const done = covered >= e.amount;
-    const upTo = before + e.amount;
+    const upTo = amounts.reduce((sum, a) => sum + Math.min(a, e.amount), 0);
     row.classList.toggle('done', done);
     row.querySelector('.item-covered').textContent = '฿' + money(covered, 2);
     row.querySelector('.progress div').style.width = (covered / e.amount * 100).toFixed(3) + '%';
     row.querySelector('.item-info').textContent =
       coverText(reachTime(upTo, perMs), done, end, upTo - income);
-    before = upTo;
   });
 
   const covered = Math.min(earned, total);
@@ -237,6 +268,10 @@ function tick() {
 
     renderExpenseProgress(earned, perMs, end);
 
+    $('extraTotal').textContent = money(extra, 2);
+    $('extraBar').style.width = (100 - salaryShare).toFixed(3) + '%';
+    $('extraInfo').textContent = `${cycleExtras().filter((x) => x.at <= now).length} รายการ · ${money(100 - salaryShare, 1)}% ของรายได้รอบนี้`;
+
     const daysLeft = Math.ceil((end - now) / UNITS.day.ms);
     $('cycleInfo').textContent = now >= end
       ? 'ครบรอบแล้ว กดรีเซ็ตเมื่อเงินเดือนเข้า'
@@ -274,6 +309,7 @@ function closeExpenseForm() {
 }
 
 $('addExpenseBtn').addEventListener('click', () => {
+  setFolded('expenses', false);
   $('expenseForm').reset();
   $('expenseError').hidden = true;
   $('expenseForm').hidden = false;
@@ -303,7 +339,12 @@ function closeExtraForm() {
   $('addExtraBtn').hidden = false;
 }
 
+document.querySelectorAll('.fold-btn').forEach((b) => {
+  b.addEventListener('click', () => setFolded(b.dataset.fold, b.getAttribute('aria-expanded') === 'true'));
+});
+
 $('addExtraBtn').addEventListener('click', () => {
+  setFolded('extras', false);
   $('extraForm').reset();
   $('extraDate').value = toLocalInput(Date.now()).slice(0, 10);
   $('extraError').hidden = true;

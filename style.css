@@ -70,3 +70,10 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .split-legend p { margin: 0; }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
 .hero .progress { height: 4px; }
+.card-head { gap: 8px; }
+.card-head h2 { flex: 1; }
+.fold-btn { background: none; border: 0; color: var(--muted); font-size: 22px; line-height: 1; width: 36px; height: 36px; cursor: pointer; transition: transform .2s; }
+.fold-btn[aria-expanded="false"] { transform: rotate(180deg); }
+.fold:not(.folded) .fold-summary, .folded .fold-body { display: none !important; }
+.folded .card-head { margin-bottom: 0; }
+#extraBar { background: #38bdf8; }
