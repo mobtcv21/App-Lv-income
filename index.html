@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lv.income">
+  <title>Lv.income</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <h1>Lv.income</h1>
+      <button id="settingsBtn" class="icon-btn" aria-label="ตั้งค่า">⚙︎</button>
+    </header>
+
+    <section id="setup" class="card" hidden>
+      <h2>เริ่มต้นใช้งาน</h2>
+      <p class="muted">ใส่เงินเดือนต่อเดือน แอปจะนับว่าคุณหาเงินได้เท่าไรแล้วตั้งแต่เงินเดือนเข้า</p>
+      <form id="setupForm">
+        <label for="salaryInput">เงินเดือน (บาท)</label>
+        <input id="salaryInput" type="text" inputmode="decimal" placeholder="เช่น 30000" autocomplete="off" required>
+        <label for="startInput">เงินเดือนเข้าล่าสุดเมื่อ</label>
+        <input id="startInput" type="datetime-local" required>
+        <p id="setupError" class="error" hidden></p>
+        <div class="row">
+          <button type="button" id="cancelSetup" class="btn ghost" hidden>ยกเลิก</button>
+          <button type="submit" class="btn primary">บันทึก</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="counter" hidden>
+      <div class="card hero">
+        <p class="label">หาเงินได้แล้วตั้งแต่เงินเดือนเข้า</p>
+        <p class="earned"><span class="currency">฿</span><span id="earnedMain">0</span><span id="earnedFrac" class="frac">.0000</span></p>
+        <div class="progress" aria-hidden="true"><div id="progressBar"></div></div>
+        <p id="cycleInfo" class="muted small"></p>
+      </div>
+
+      <div class="card">
+        <div class="seg" role="tablist" aria-label="หน่วยของอัตรา">
+          <button role="tab" data-unit="second">ต่อวินาที</button>
+          <button role="tab" data-unit="hour">ต่อชั่วโมง</button>
+          <button role="tab" data-unit="day">ต่อวัน</button>
+        </div>
+        <p class="rate"><span class="currency">฿</span><span id="rateValue">0</span></p>
+        <p id="rateUnit" class="muted small center"></p>
+      </div>
+
+      <button id="resetBtn" class="btn primary wide">เงินเดือนเข้าแล้ว รีเซ็ตเลย</button>
+      <p class="muted small center">ข้อมูลเก็บไว้ในเครื่องนี้เท่านั้น</p>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
