@@ -62,3 +62,11 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .list .progress { height: 6px; margin: 8px 0 6px; }
 .list .name { flex: 1; overflow-wrap: anywhere; }
 .list .del { background: none; border: 0; color: var(--muted); font-size: 20px; padding: 0 4px; cursor: pointer; }
+.split { display: flex; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 18px 0 10px; }
+.split div { height: 100%; width: 0; }
+#splitSalary, .dot.salary { background: var(--accent); }
+#splitExtra, .dot.extra { background: #38bdf8; }
+.split-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.split-legend p { margin: 0; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+.hero .progress { height: 4px; }
