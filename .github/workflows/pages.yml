@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Refresh portfolio prices (times are UTC; Thailand is UTC+7).
+  schedule:
+    - cron: '5 3-10 * * 1-5'  # hourly 10:05-17:05 on weekdays, Thai market hours
+    - cron: '30 13 * * *'     # 20:30 every day, after the close and NAV publication
 
 permissions:
   contents: read
@@ -22,7 +26,14 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
+      - id: pages
+        uses: actions/configure-pages@v5
+      - name: Fetch portfolio prices
+        continue-on-error: true
+        env:
+          SEC_API_KEY: ${{ secrets.SEC_API_KEY }}
+          PREV_URL: ${{ steps.pages.outputs.base_url }}/prices.json
+        run: node scripts/fetch-prices.mjs prices.json
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .

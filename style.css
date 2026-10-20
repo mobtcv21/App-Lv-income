@@ -77,3 +77,13 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .fold:not(.folded) .fold-summary, .folded .fold-body { display: none !important; }
 .folded .card-head { margin-bottom: 0; }
 #extraBar { background: #38bdf8; }
+.tabs { margin-bottom: 16px; background: var(--card); }
+.tabs button[aria-selected="true"] { background: var(--bg); }
+select { width: 100%; font: inherit; font-size: 17px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--text); -webkit-appearance: none; appearance: none; }
+.cols { display: flex; gap: 12px; }
+.cols > div { flex: 1; min-width: 0; }
+.pnl { margin: 8px 0 4px; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.gain { color: var(--accent); }
+.loss { color: var(--danger); }
+#holdingList .progress div { background: #a78bfa; }
+#hPriceHint { margin-top: 6px; }

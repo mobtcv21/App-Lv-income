@@ -1,0 +1,23 @@
+name: Check price sources
+
+# Dry run of the price fetcher on pull requests that touch it, so a broken
+# source shows up before it reaches the live site. Nothing is deployed.
+on:
+  pull_request:
+    paths:
+      - 'scripts/fetch-prices.mjs'
+      - '.github/workflows/prices-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch prices
+        env:
+          SEC_API_KEY: ${{ secrets.SEC_API_KEY }}
+        run: node scripts/fetch-prices.mjs /tmp/prices.json

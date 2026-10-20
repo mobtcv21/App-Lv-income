@@ -51,6 +51,8 @@ function toLocalInput(ms) {
 
 function showSetup(editing) {
   $('counter').hidden = true;
+  $('portfolio').hidden = true;
+  $('tabs').hidden = true;
   $('setup').hidden = false;
   $('setupError').hidden = true;
   $('cancelSetup').hidden = !editing;
@@ -60,6 +62,13 @@ function showSetup(editing) {
 
 function showCounter() {
   $('setup').hidden = true;
+  $('tabs').hidden = false;
+  renderTabs();
+  if (state.tab === 'portfolio') {
+    showPortfolio();
+    return;
+  }
+  $('portfolio').hidden = true;
   $('counter').hidden = false;
   renderUnit();
   renderFolds();
@@ -399,7 +408,24 @@ document.querySelectorAll('.seg button').forEach((b) => {
   });
 });
 
-if (state) showCounter(); else showSetup(false);
+document.querySelectorAll('.tabs button').forEach((b) => {
+  b.addEventListener('click', () => {
+    state.tab = b.dataset.tab;
+    save(state);
+    showCounter();
+  });
+});
+
+function renderTabs() {
+  document.querySelectorAll('.tabs button').forEach((b) => {
+    b.setAttribute('aria-selected', String(b.dataset.tab === (state.tab || 'counter')));
+  });
+}
+
+// Runs after portfolio.js has loaded too.
+document.addEventListener('DOMContentLoaded', () => {
+  if (state) showCounter(); else showSetup(false);
+});
 requestAnimationFrame(tick);
 
 if ('serviceWorker' in navigator) {
