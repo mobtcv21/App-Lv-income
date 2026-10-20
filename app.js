@@ -73,55 +73,77 @@ function expenseTotal() {
   return expenses().reduce((sum, e) => sum + e.amount, 0);
 }
 
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text) node.textContent = text;
+  return node;
+}
+
 function renderExpenses() {
   const list = expenses();
   $('expenseEmpty').hidden = list.length > 0;
   $('expenseSummary').hidden = list.length === 0;
   $('expenseTotal').textContent = money(expenseTotal(), 2);
-  const ul = $('expenseList');
-  ul.replaceChildren(...list.map((e, i) => {
-    const li = document.createElement('li');
-    const name = document.createElement('span');
-    name.className = 'name';
-    name.textContent = e.name;
-    const amt = document.createElement('span');
-    amt.className = 'amt';
-    amt.textContent = '฿' + money(e.amount, 2);
-    const del = document.createElement('button');
-    del.className = 'del';
+  $('expenseList').replaceChildren(...list.map((e, i) => {
+    const li = el('li');
+    const head = el('div', 'item-head');
+    const del = el('button', 'del', '×');
     del.setAttribute('aria-label', 'ลบ ' + e.name);
-    del.textContent = '×';
     del.addEventListener('click', () => {
       if (!confirm(`ลบ "${e.name}" ใช่ไหม?`)) return;
       state.expenses.splice(i, 1);
       save(state);
       renderExpenses();
     });
-    li.append(name, amt, del);
+    head.append(el('span', 'name', e.name), del);
+    const amounts = el('p', 'item-amt');
+    amounts.append(el('span', 'item-covered', '0'), el('span', 'muted', ' / ฿' + money(e.amount, 2)));
+    const bar = el('div', 'progress');
+    bar.append(el('div'));
+    li.append(head, amounts, bar, el('p', 'muted small item-info'));
     return li;
   }));
 }
 
-// Counts toward the fixed-expense total at the same rate as income, stopping
-// once it is covered, and projects when that happens in this cycle.
+function coverText(at, covered, end, shortBy) {
+  if (covered) return `ครบแล้วเมื่อ ${dateTimeText(at)}`;
+  if (at > end) return `รายได้รอบนี้ไม่พอ ขาดอีก ฿${money(shortBy, 2)}`;
+  return `จะครบ ${dateTimeText(at)} (วันที่ ${Math.ceil((at - state.cycleStart) / UNITS.day.ms)} ของรอบ)`;
+}
+
+// Income pays the fixed expenses one after another in list order: each item
+// fills at the income rate once the items above it are covered, and stops when
+// it is full until the next salary reset.
 function renderExpenseProgress(earned, perMs, end) {
+  const list = expenses();
   const total = expenseTotal();
   if (total <= 0) return;
+  const rows = $('expenseList').children;
+  let before = 0;
+  list.forEach((e, i) => {
+    const row = rows[i];
+    if (!row) return;
+    const covered = Math.min(Math.max(earned - before, 0), e.amount);
+    const done = covered >= e.amount;
+    const upTo = before + e.amount;
+    row.classList.toggle('done', done);
+    row.querySelector('.item-covered').textContent = '฿' + money(covered, 2);
+    row.querySelector('.progress div').style.width = (covered / e.amount * 100).toFixed(3) + '%';
+    row.querySelector('.item-info').textContent =
+      coverText(state.cycleStart + upTo / perMs, done, end, upTo - state.salary);
+    before = upTo;
+  });
+
   const covered = Math.min(earned, total);
   const done = covered >= total;
   $('coveredValue').textContent = money(covered, 2);
   $('expenseBar').style.width = (covered / total * 100).toFixed(3) + '%';
   $('expenseSummary').classList.toggle('done', done);
   const at = state.cycleStart + total / perMs;
-  let info;
-  if (done) {
-    info = `หาครบแล้วเมื่อ ${dateTimeText(at)} ที่เหลือคือเงินเก็บของรอบนี้`;
-  } else if (at > end) {
-    info = `รายได้รอบนี้ไม่พอ ขาดอีก ฿${money(total - state.salary, 2)}`;
-  } else {
-    info = `จะหาครบ ${dateTimeText(at)} (วันที่ ${Math.ceil((at - state.cycleStart) / UNITS.day.ms)} ของรอบ)`;
-  }
-  $('expenseInfo').textContent = info;
+  $('expenseInfo').textContent = done
+    ? `หาครบทุกรายการแล้วเมื่อ ${dateTimeText(at)} ที่เหลือคือเงินเก็บของรอบนี้`
+    : 'รวมทุกรายการ: ' + coverText(at, false, end, total - state.salary);
 }
 
 function dateTimeText(ms) {
