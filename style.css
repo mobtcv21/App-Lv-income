@@ -47,3 +47,15 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .btn.wide { width: 100%; margin-bottom: 12px; }
 .error { color: var(--danger); font-size: 14px; margin: 10px 0 0; }
 [hidden] { display: none !important; }
+.card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.card-head h2 { margin: 0; }
+.btn.small-btn { font-size: 15px; padding: 8px 14px; background: var(--line); color: var(--text); border-radius: 10px; }
+.covered { margin: 8px 0 0; font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.covered .muted { font-size: 16px; font-weight: 500; }
+.done #expenseBar { background: var(--accent); }
+#expenseBar { background: #f59e0b; }
+.list { list-style: none; padding: 0; margin: 16px 0 0; border-top: 1px solid var(--line); }
+.list li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.list .name { flex: 1; overflow-wrap: anywhere; }
+.list .amt { font-variant-numeric: tabular-nums; }
+.list .del { background: none; border: 0; color: var(--muted); font-size: 20px; padding: 0 4px; cursor: pointer; }

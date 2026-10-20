@@ -55,6 +55,31 @@
         <p id="rateUnit" class="muted small center"></p>
       </div>
 
+      <div class="card">
+        <div class="card-head">
+          <h2>ค่าใช้จ่ายคงที่</h2>
+          <button id="addExpenseBtn" class="btn small-btn">+ เพิ่ม</button>
+        </div>
+        <form id="expenseForm" hidden>
+          <label for="expenseName">ชื่อรายการ</label>
+          <input id="expenseName" type="text" placeholder="เช่น ค่าเช่าห้อง" autocomplete="off" required>
+          <label for="expenseAmount">จำนวนต่อเดือน (บาท)</label>
+          <input id="expenseAmount" type="text" inputmode="decimal" placeholder="เช่น 5000" autocomplete="off" required>
+          <p id="expenseError" class="error" hidden></p>
+          <div class="row">
+            <button type="button" id="cancelExpense" class="btn ghost">ยกเลิก</button>
+            <button type="submit" class="btn primary">เพิ่ม</button>
+          </div>
+        </form>
+        <p id="expenseEmpty" class="muted small">ยังไม่มีรายการ กด + เพิ่ม เพื่อใส่ค่าใช้จ่ายที่ต้องจ่ายทุกเดือน</p>
+        <div id="expenseSummary" hidden>
+          <p class="covered"><span class="currency">฿</span><span id="coveredValue">0</span> <span class="muted">/ ฿<span id="expenseTotal">0</span></span></p>
+          <div class="progress" aria-hidden="true"><div id="expenseBar"></div></div>
+          <p id="expenseInfo" class="muted small"></p>
+          <ul id="expenseList" class="list"></ul>
+        </div>
+      </div>
+
       <button id="resetBtn" class="btn primary wide">เงินเดือนเข้าแล้ว รีเซ็ตเลย</button>
       <p class="muted small center">ข้อมูลเก็บไว้ในเครื่องนี้เท่านั้น</p>
     </section>
