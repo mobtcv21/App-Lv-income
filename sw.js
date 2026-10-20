@@ -1,10 +1,11 @@
 // Cache the app shell so it opens without a connection.
-const CACHE = 'lv-income-v5';
+const CACHE = 'lv-income-v6';
 const FILES = [
   './',
   'index.html',
   'style.css',
   'app.js',
+  'portfolio.js',
   'manifest.json',
   'icons/icon.svg',
   'icons/apple-touch-icon.png',

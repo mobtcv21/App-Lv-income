@@ -37,6 +37,11 @@
       </form>
     </section>
 
+    <div id="tabs" class="seg tabs" role="tablist" aria-label="หน้า" hidden>
+      <button role="tab" data-tab="counter">รายได้</button>
+      <button role="tab" data-tab="portfolio">พอร์ตลงทุน</button>
+    </div>
+
     <section id="counter" hidden>
       <div class="card hero">
         <p class="label">หาเงินได้แล้วในรอบนี้</p>
@@ -117,7 +122,73 @@
       <button id="resetBtn" class="btn primary wide">เงินเดือนเข้าแล้ว รีเซ็ตเลย</button>
       <p class="muted small center">ข้อมูลเก็บไว้ในเครื่องนี้เท่านั้น</p>
     </section>
+
+    <section id="portfolio" hidden>
+      <div class="card hero">
+        <p class="label">มูลค่าพอร์ตตอนนี้</p>
+        <p class="earned"><span class="currency">฿</span><span id="pfValue">0.00</span></p>
+        <p id="pfPnl" class="pnl"></p>
+        <p id="pfCost" class="muted small"></p>
+        <p id="pfUpdated" class="muted small"></p>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>สินทรัพย์ที่ถือ</h2>
+          <button id="addHoldingBtn" class="btn small-btn">+ เพิ่ม</button>
+        </div>
+        <form id="holdingForm" hidden>
+          <label for="hSource">สินทรัพย์</label>
+          <select id="hSource">
+            <option value="KKP US500-UH-E">กองทุน KKP US500-UH-E (ราคา NAV อัตโนมัติ)</option>
+            <option value="XAU">ทองคำ XAU/USD (ราคาอัตโนมัติ)</option>
+            <option value="manual">อื่น ๆ (กรอกราคาเอง)</option>
+          </select>
+          <label for="hName">ชื่อหรือตัวย่อ</label>
+          <input id="hName" type="text" autocomplete="off" required>
+          <div class="cols">
+            <div>
+              <label for="hUnits">จำนวน</label>
+              <input id="hUnits" type="text" inputmode="decimal" placeholder="เช่น 120.5" autocomplete="off" required>
+            </div>
+            <div>
+              <label for="hUnit">หน่วย</label>
+              <select id="hUnit">
+                <option value="unit">หน่วย</option>
+                <option value="g">กรัม</option>
+                <option value="oz">ออนซ์</option>
+              </select>
+            </div>
+          </div>
+          <div class="cols">
+            <div>
+              <label for="hCost" id="hCostLabel">ต้นทุนเฉลี่ยต่อหน่วย</label>
+              <input id="hCost" type="text" inputmode="decimal" placeholder="เช่น 12.50" autocomplete="off" required>
+            </div>
+            <div>
+              <label for="hCurrency">สกุลเงิน</label>
+              <select id="hCurrency">
+                <option value="THB">บาท (THB)</option>
+                <option value="USD">ดอลลาร์ (USD)</option>
+              </select>
+            </div>
+          </div>
+          <label for="hPrice" id="hPriceLabel">ราคาปัจจุบันต่อหน่วย (กรอกเอง)</label>
+          <input id="hPrice" type="text" inputmode="decimal" placeholder="เว้นว่างเพื่อใช้ราคาอัตโนมัติ" autocomplete="off">
+          <p id="hPriceHint" class="muted small"></p>
+          <p id="holdingError" class="error" hidden></p>
+          <div class="row">
+            <button type="button" id="cancelHolding" class="btn ghost">ยกเลิก</button>
+            <button type="submit" class="btn primary">บันทึก</button>
+          </div>
+        </form>
+        <p id="holdingEmpty" class="muted small">ยังไม่มีรายการ กด + เพิ่ม แล้วใส่จำนวนกับต้นทุนเฉลี่ย ข้อมูลนี้เก็บในเครื่องนี้เท่านั้น</p>
+        <ul id="holdingList" class="list"></ul>
+      </div>
+      <p class="muted small center">ราคาอัปเดตทุกชั่วโมงช่วงตลาดเปิดวันจันทร์ถึงศุกร์ และวันละครั้งตอน 20:30 น. ไม่ใช่ราคาเรียลไทม์</p>
+    </section>
   </main>
   <script src="app.js"></script>
+  <script src="portfolio.js"></script>
 </body>
 </html>
