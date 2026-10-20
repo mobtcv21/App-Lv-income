@@ -62,7 +62,56 @@ function showCounter() {
   $('setup').hidden = true;
   $('counter').hidden = false;
   renderUnit();
+  renderExtras();
   renderExpenses();
+}
+
+// Extra income (bonus, side jobs) entered during the current cycle. It adds
+// to the cycle total at the moment it was received but never to the rate,
+// which stays salary only.
+function cycleExtras() {
+  const end = cycleEnd(state.cycleStart);
+  return (state.extras || [])
+    .filter((x) => x.at >= state.cycleStart && x.at < end)
+    .sort((a, b) => a.at - b.at);
+}
+
+function extrasUntil(t) {
+  return cycleExtras().reduce((sum, x) => (x.at <= t ? sum + x.amount : sum), 0);
+}
+
+// When cumulative cycle income (salary accrued + extras received) first
+// reaches target, assuming no further extras after now.
+function reachTime(target, perMs) {
+  let extra = 0;
+  for (const x of cycleExtras()) {
+    const t = state.cycleStart + (target - extra) / perMs;
+    if (t <= x.at) return t;
+    extra += x.amount;
+    if (extra + perMs * (x.at - state.cycleStart) >= target) return x.at;
+  }
+  return state.cycleStart + Math.max(target - extra, 0) / perMs;
+}
+
+function renderExtras() {
+  const list = cycleExtras();
+  $('extraEmpty').hidden = list.length > 0;
+  $('extraList').hidden = list.length === 0;
+  $('extraList').replaceChildren(...list.map((x) => {
+    const li = el('li');
+    const head = el('div', 'item-head');
+    const del = el('button', 'del', '×');
+    del.setAttribute('aria-label', 'ลบ ' + x.label);
+    del.addEventListener('click', () => {
+      if (!confirm(`ลบ "${x.label}" ใช่ไหม?`)) return;
+      state.extras = state.extras.filter((y) => y !== x);
+      save(state);
+      renderExtras();
+    });
+    head.append(el('span', 'name', x.label), el('span', 'item-amt', '+฿' + money(x.amount, 2)), del);
+    li.append(head, el('p', 'muted small', dateText(x.at)));
+    return li;
+  }));
 }
 
 function expenses() {
@@ -117,6 +166,7 @@ function coverText(at, covered, end, shortBy) {
 // it is full until the next salary reset.
 function renderExpenseProgress(earned, perMs, end) {
   const list = expenses();
+  const income = state.salary + extrasUntil(end);
   const total = expenseTotal();
   if (total <= 0) return;
   const rows = $('expenseList').children;
@@ -131,7 +181,7 @@ function renderExpenseProgress(earned, perMs, end) {
     row.querySelector('.item-covered').textContent = '฿' + money(covered, 2);
     row.querySelector('.progress div').style.width = (covered / e.amount * 100).toFixed(3) + '%';
     row.querySelector('.item-info').textContent =
-      coverText(state.cycleStart + upTo / perMs, done, end, upTo - state.salary);
+      coverText(reachTime(upTo, perMs), done, end, upTo - income);
     before = upTo;
   });
 
@@ -140,10 +190,10 @@ function renderExpenseProgress(earned, perMs, end) {
   $('coveredValue').textContent = money(covered, 2);
   $('expenseBar').style.width = (covered / total * 100).toFixed(3) + '%';
   $('expenseSummary').classList.toggle('done', done);
-  const at = state.cycleStart + total / perMs;
+  const at = reachTime(total, perMs);
   $('expenseInfo').textContent = done
     ? `หาครบทุกรายการแล้วเมื่อ ${dateTimeText(at)} ที่เหลือคือเงินเก็บของรอบนี้`
-    : 'รวมทุกรายการ: ' + coverText(at, false, end, total - state.salary);
+    : 'รวมทุกรายการ: ' + coverText(at, false, end, total - income);
 }
 
 function dateTimeText(ms) {
@@ -165,12 +215,22 @@ function tick() {
     const length = end - state.cycleStart;
     const perMs = state.salary / length;
     const elapsed = Math.min(Math.max(now - state.cycleStart, 0), length);
-    const earned = perMs * elapsed;
+    const salaryEarned = perMs * elapsed;
+    const extra = extrasUntil(now);
+    const earned = salaryEarned + extra;
 
     const [whole, frac] = money(earned, 4).split('.');
     $('earnedMain').textContent = whole;
     $('earnedFrac').textContent = '.' + frac;
     $('progressBar').style.width = (elapsed / length * 100).toFixed(3) + '%';
+
+    const salaryShare = earned > 0 ? salaryEarned / earned * 100 : 100;
+    $('splitSalary').style.width = salaryShare.toFixed(3) + '%';
+    $('splitExtra').style.width = (100 - salaryShare).toFixed(3) + '%';
+    $('salaryPart').textContent = money(salaryEarned, 2);
+    $('extraPart').textContent = money(extra, 2);
+    $('salaryPct').textContent = money(salaryShare, 1);
+    $('extraPct').textContent = money(100 - salaryShare, 1);
 
     const unit = UNITS[state.unit || 'second'];
     $('rateValue').textContent = money(perMs * unit.ms, unit.digits);
@@ -238,10 +298,56 @@ $('expenseForm').addEventListener('submit', (e) => {
   renderExpenses();
 });
 
+function closeExtraForm() {
+  $('extraForm').hidden = true;
+  $('addExtraBtn').hidden = false;
+}
+
+$('addExtraBtn').addEventListener('click', () => {
+  $('extraForm').reset();
+  $('extraDate').value = toLocalInput(Date.now()).slice(0, 10);
+  $('extraError').hidden = true;
+  $('extraForm').hidden = false;
+  $('addExtraBtn').hidden = true;
+  $('extraLabel').focus();
+});
+
+$('cancelExtra').addEventListener('click', closeExtraForm);
+
+$('extraForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const label = $('extraLabel').value.trim();
+  const amount = Number($('extraAmount').value.replace(/[,\s฿]/g, ''));
+  const err = $('extraError');
+  if (!label || !(amount > 0)) {
+    err.textContent = 'กรุณาใส่ชื่อและจำนวนเงินที่มากกว่า 0';
+    err.hidden = false;
+    return;
+  }
+  // A date-only entry counts from now if it is today, otherwise from noon of
+  // that day, never earlier than the cycle start.
+  const now = Date.now();
+  const day = new Date($('extraDate').value + 'T00:00');
+  const today = toLocalInput(now).slice(0, 10) === $('extraDate').value;
+  const at = today ? now : Math.max(day.getTime() + 12 * 3600 * 1000, state.cycleStart);
+  if (!(day.getTime() > 0) || at > now || day.getTime() + UNITS.day.ms <= state.cycleStart) {
+    err.textContent = `วันที่ต้องอยู่ในรอบนี้ (${dateText(state.cycleStart)} ถึงวันนี้)`;
+    err.hidden = false;
+    return;
+  }
+  state.extras = [...(state.extras || []), { label, amount, at }];
+  save(state);
+  closeExtraForm();
+  renderExtras();
+});
+
 $('resetBtn').addEventListener('click', () => {
   if (!confirm('เงินเดือนเข้าแล้วใช่ไหม? ตัวนับจะเริ่มใหม่จากตอนนี้')) return;
   state.cycleStart = Date.now();
+  // Extras from the finished cycle no longer count.
+  state.extras = [];
   save(state);
+  renderExtras();
 });
 
 document.querySelectorAll('.seg button').forEach((b) => {
