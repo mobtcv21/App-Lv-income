@@ -62,6 +62,70 @@ function showCounter() {
   $('setup').hidden = true;
   $('counter').hidden = false;
   renderUnit();
+  renderExpenses();
+}
+
+function expenses() {
+  return state.expenses || [];
+}
+
+function expenseTotal() {
+  return expenses().reduce((sum, e) => sum + e.amount, 0);
+}
+
+function renderExpenses() {
+  const list = expenses();
+  $('expenseEmpty').hidden = list.length > 0;
+  $('expenseSummary').hidden = list.length === 0;
+  $('expenseTotal').textContent = money(expenseTotal(), 2);
+  const ul = $('expenseList');
+  ul.replaceChildren(...list.map((e, i) => {
+    const li = document.createElement('li');
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = e.name;
+    const amt = document.createElement('span');
+    amt.className = 'amt';
+    amt.textContent = '฿' + money(e.amount, 2);
+    const del = document.createElement('button');
+    del.className = 'del';
+    del.setAttribute('aria-label', 'ลบ ' + e.name);
+    del.textContent = '×';
+    del.addEventListener('click', () => {
+      if (!confirm(`ลบ "${e.name}" ใช่ไหม?`)) return;
+      state.expenses.splice(i, 1);
+      save(state);
+      renderExpenses();
+    });
+    li.append(name, amt, del);
+    return li;
+  }));
+}
+
+// Counts toward the fixed-expense total at the same rate as income, stopping
+// once it is covered, and projects when that happens in this cycle.
+function renderExpenseProgress(earned, perMs, end) {
+  const total = expenseTotal();
+  if (total <= 0) return;
+  const covered = Math.min(earned, total);
+  const done = covered >= total;
+  $('coveredValue').textContent = money(covered, 2);
+  $('expenseBar').style.width = (covered / total * 100).toFixed(3) + '%';
+  $('expenseSummary').classList.toggle('done', done);
+  const at = state.cycleStart + total / perMs;
+  let info;
+  if (done) {
+    info = `หาครบแล้วเมื่อ ${dateTimeText(at)} ที่เหลือคือเงินเก็บของรอบนี้`;
+  } else if (at > end) {
+    info = `รายได้รอบนี้ไม่พอ ขาดอีก ฿${money(total - state.salary, 2)}`;
+  } else {
+    info = `จะหาครบ ${dateTimeText(at)} (วันที่ ${Math.ceil((at - state.cycleStart) / UNITS.day.ms)} ของรอบ)`;
+  }
+  $('expenseInfo').textContent = info;
+}
+
+function dateTimeText(ms) {
+  return new Date(ms).toLocaleString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' น.';
 }
 
 function renderUnit() {
@@ -89,6 +153,8 @@ function tick() {
     const unit = UNITS[state.unit || 'second'];
     $('rateValue').textContent = money(perMs * unit.ms, unit.digits);
 
+    renderExpenseProgress(earned, perMs, end);
+
     const daysLeft = Math.ceil((end - now) / UNITS.day.ms);
     $('cycleInfo').textContent = now >= end
       ? 'ครบรอบแล้ว กดรีเซ็ตเมื่อเงินเดือนเข้า'
@@ -112,13 +178,43 @@ $('setupForm').addEventListener('submit', (e) => {
     err.hidden = false;
     return;
   }
-  state = { salary, cycleStart: start, unit: state ? state.unit : 'second' };
+  state = { ...state, salary, cycleStart: start, unit: state ? state.unit : 'second' };
   save(state);
   showCounter();
 });
 
 $('cancelSetup').addEventListener('click', showCounter);
 $('settingsBtn').addEventListener('click', () => showSetup(Boolean(state)));
+
+function closeExpenseForm() {
+  $('expenseForm').hidden = true;
+  $('addExpenseBtn').hidden = false;
+}
+
+$('addExpenseBtn').addEventListener('click', () => {
+  $('expenseForm').reset();
+  $('expenseError').hidden = true;
+  $('expenseForm').hidden = false;
+  $('addExpenseBtn').hidden = true;
+  $('expenseName').focus();
+});
+
+$('cancelExpense').addEventListener('click', closeExpenseForm);
+
+$('expenseForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = $('expenseName').value.trim();
+  const amount = Number($('expenseAmount').value.replace(/[,\s฿]/g, ''));
+  if (!name || !(amount > 0)) {
+    $('expenseError').textContent = 'กรุณาใส่ชื่อและจำนวนเงินที่มากกว่า 0';
+    $('expenseError').hidden = false;
+    return;
+  }
+  state.expenses = [...expenses(), { name, amount }];
+  save(state);
+  closeExpenseForm();
+  renderExpenses();
+});
 
 $('resetBtn').addEventListener('click', () => {
   if (!confirm('เงินเดือนเข้าแล้วใช่ไหม? ตัวนับจะเริ่มใหม่จากตอนนี้')) return;
