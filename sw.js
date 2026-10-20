@@ -1,5 +1,5 @@
 // Cache the app shell so it opens without a connection.
-const CACHE = 'lv-income-v4';
+const CACHE = 'lv-income-v5';
 const FILES = [
   './',
   'index.html',

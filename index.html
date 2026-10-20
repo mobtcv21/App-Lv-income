@@ -60,12 +60,18 @@
         <p id="rateUnit" class="muted small center"></p>
       </div>
 
-      <div class="card">
+      <div id="extraCard" class="card fold">
         <div class="card-head">
           <h2>รายได้เสริม / โบนัส</h2>
           <button id="addExtraBtn" class="btn small-btn">+ เพิ่ม</button>
+          <button class="fold-btn" data-fold="extras" aria-expanded="true" aria-label="หุบหรือขยาย">⌃</button>
         </div>
-        <form id="extraForm" hidden>
+        <div class="fold-summary">
+          <p class="covered"><span class="currency">฿</span><span id="extraTotal">0</span></p>
+          <div class="progress" aria-hidden="true"><div id="extraBar"></div></div>
+          <p id="extraInfo" class="muted small"></p>
+        </div>
+        <form id="extraForm" class="fold-body" hidden>
           <label for="extraLabel">ชื่อรายการ</label>
           <input id="extraLabel" type="text" placeholder="เช่น โบนัส, งานฟรีแลนซ์" autocomplete="off" required>
           <label for="extraAmount">จำนวนเงิน (บาท)</label>
@@ -78,16 +84,17 @@
             <button type="submit" class="btn primary">เพิ่ม</button>
           </div>
         </form>
-        <p id="extraEmpty" class="muted small">ยังไม่มีรายการในรอบนี้ เงินที่บันทึกจะบวกเข้ายอดหลักทันที โดยไม่เปลี่ยนอัตราต่อวินาที</p>
-        <ul id="extraList" class="list"></ul>
+        <p id="extraEmpty" class="muted small fold-body">ยังไม่มีรายการในรอบนี้ เงินที่บันทึกจะบวกเข้ายอดหลักทันที โดยไม่เปลี่ยนอัตราต่อวินาที</p>
+        <ul id="extraList" class="list fold-body"></ul>
       </div>
 
-      <div class="card">
+      <div id="expenseCard" class="card fold">
         <div class="card-head">
           <h2>ค่าใช้จ่ายคงที่</h2>
           <button id="addExpenseBtn" class="btn small-btn">+ เพิ่ม</button>
+          <button class="fold-btn" data-fold="expenses" aria-expanded="true" aria-label="หุบหรือขยาย">⌃</button>
         </div>
-        <form id="expenseForm" hidden>
+        <form id="expenseForm" class="fold-body" hidden>
           <label for="expenseName">ชื่อรายการ</label>
           <input id="expenseName" type="text" placeholder="เช่น ค่าเช่าห้อง" autocomplete="off" required>
           <label for="expenseAmount">จำนวนต่อเดือน (บาท)</label>
@@ -103,7 +110,7 @@
           <p class="covered"><span class="currency">฿</span><span id="coveredValue">0</span> <span class="muted">/ ฿<span id="expenseTotal">0</span></span></p>
           <div class="progress" aria-hidden="true"><div id="expenseBar"></div></div>
           <p id="expenseInfo" class="muted small"></p>
-          <ul id="expenseList" class="list"></ul>
+          <ul id="expenseList" class="list fold-body"></ul>
         </div>
       </div>
 
